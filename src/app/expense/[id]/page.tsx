@@ -2,39 +2,60 @@
 import { AddExpense } from '@/components/AddExpense';
 import { ExpenseTable } from '@/components/ExpenseTable';
 import { Progress } from '@/components/ui/progress';
-import { useParams, useRouter } from 'next/navigation';
-import { addExpense, selectBudgetSummary } from '@/redux/budgetdata/budgetdataSlice';
-import React, { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation';
+
+import React, { useEffect } from 'react'
 import { BsEmojiLaughing } from 'react-icons/bs';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { doc, getDoc } from 'firebase/firestore';
+import { setBudgets } from '@/redux/budgetdata/budgetdataSlice';
+
+import { db } from '@/lib/firebase';
+
+type collection = {
+    budgetName: string,
+    budgetAmount: number,
+}
 
 
 const Page = () => {
-    const { formData, budgets } = useSelector(state => state.budgetData);
     const { id } = useParams<{ id: string }>();
-    const budgetdata = [budgets[id]]
-    const { totalExpenses, remainingAmount } = useSelector((state: any) => selectBudgetSummary(state, id));
-    const num = parseInt(remainingAmount);
-    const orignalBudgetamount = totalExpenses + remainingAmount;
-    console.log(totalExpenses, remainingAmount);
-    const percentage = (num / orignalBudgetamount) * 100
+    const { budgets } = useSelector((state: any) => state.budgetData);
+    const dispatch = useDispatch();
+    console.log(budgets);
 
-    // const [expensedetails, setExpenseDetails] = useState([{
+    const totalAmount = budgets.map((item) => item.totalAmount)
+    const remainingAmount = budgets.map((item) => item.budgetAmount)
 
-    // }]);
+    const percentage = (remainingAmount / totalAmount) * 100
 
 
 
-    // console.log(expensedetails);
+    useEffect(() => {
+        const getSpecificBudgetData = async () => {
 
+            try {
+                const docRef = doc(db, 'budget', id);
+                const docSnap = await getDoc(docRef);
 
+                const budget = {
+                    id: docSnap.id,
+                    ...docSnap.data(),
+                }
 
+                dispatch(setBudgets([budget]))
+            } catch (error) {
+                console.error("Error fetching budget data:", error.message);
+            }
+        };
+        getSpecificBudgetData();
+    }, []);
 
     return (
         <>
             <h1 className='font-bold pb-5 text-xl'>My Expense</h1>
             <div className='pt-6 flex flex-wrap gap-10'>
-                {budgetdata?.map((budget: any) => (
+                {budgets && budgets.map((budget: any) => (
                     <div key={budget?.id} className="!w-1/2 h-36 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 mb-6" >
                         <div className='flex justify-between'>
                             <div className='flex gap-2 items-center pt-5 pl-3'>
@@ -50,8 +71,8 @@ const Page = () => {
                         </div>
                         <div className='pt-6'>
                             <div className='flex justify-between mb-2 mx-4 '>
-                                <p className='text-gray-300 fony-light text-xs'>${totalExpenses} spend</p>
-                                <p className='text-gray-300 fony-light text-xs'>${remainingAmount} remaining</p>
+
+                                <p className='text-gray-300 fony-light text-xs'>${budget?.budgetAmount}remaining</p>
                             </div>
                             <div className='mx-4'>
                                 <Progress value={percentage} />

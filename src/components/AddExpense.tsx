@@ -1,13 +1,16 @@
-import * as React from "react";
+
+'use client';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addExpense } from '@/redux/budgetdata/budgetdataSlice';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useParams } from "next/navigation";
-import { BsXLg } from "react-icons/bs";
-import { setExpenseDetails } from '@/redux/budgetdata/budgetdataSlice';
+import { updateBudget, settotalAmount, setExpenses } from '@/redux/budgetdata/budgetdataSlice';
+
+import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export function AddExpense() {
     const dispatch = useDispatch();
@@ -30,24 +33,85 @@ export function AddExpense() {
         setExpenseAmountValid(value.trim().length > 0);
     };
 
-    const handleAddExpense = () => {
-        if (!expenseNameValid || !expenseAmountValid) {
-            alert('Please fill out all fields.');
-            return;
+
+    useEffect(() => {
+        const getExpenses = async () => {
+            try {
+
+                const expensesSnapshot = await getDocs(collection(db, 'budget', id, 'expense'));
+                const updatedExpenses = expensesSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                dispatch(setExpenses(updatedExpenses));
+
+            } catch (error) {
+                console.error("Error fetching expenses:", error.message);
+
+            }
+        };
+
+        if (id) {
+            getExpenses();
         }
 
+    }, []);
+
+
+
+    const addExpense = async () => {
         const amount = parseFloat(expenseAmount);
-        console.log(expenseAmount);
 
-        dispatch(addExpense({ id: id, expenseAmount: amount }));
-        dispatch(setExpenseDetails({ id: id, expenseName, expenseAmount }));
+        const expenseData = {
+            expenseName,
+            expenseAmount: amount
+        };
 
-        // Reset form fields after adding expense
-        setExpenseName('');
-        setExpenseAmount('');
-        setExpenseNameValid(false);
-        setExpenseAmountValid(false);
+        try {
+            // Add the expense to the budget
+            const expensesRef = collection(db, 'budget', id, 'expense');
+            const expenseDocRef = await addDoc(expensesRef, expenseData);
+
+            // Update the budget after adding the new expense document
+            const budgetRef = doc(db, 'budget', id);
+            const budgetDoc = await getDoc(budgetRef);
+            if (budgetDoc.exists()) {
+                const currentTotalAmount = budgetDoc.data().budgetAmount;
+                const newTotalAmount = currentTotalAmount - amount;
+
+                // Update currentBudgetAmount in Redux state
+                dispatch(updateBudget({ id, newTotalAmount }));
+
+                await updateDoc(budgetRef, {
+                    budgetAmount: newTotalAmount,
+
+                });
+
+
+
+                const expensesSnapshot = await getDocs(collection(db, 'budget', id, 'expense'));
+                const updatedExpenses = expensesSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                dispatch(setExpenses(updatedExpenses));
+
+            } else {
+                console.error("Budget document not found");
+            }
+
+            setExpenseName('');
+            setExpenseAmount('');
+            setExpenseNameValid(false);
+            setExpenseAmountValid(false);
+
+        } catch (error) {
+            console.error("Error adding expense:", error.message);
+        }
     };
+
 
     return (
         <Card className="w-[600px] h-[270px]">
@@ -80,7 +144,7 @@ export function AddExpense() {
                 </form>
             </CardContent>
             <CardFooter className="flex justify-between">
-                <Button className="w-full" onClick={handleAddExpense} disabled={!expenseNameValid || !expenseAmountValid}>
+                <Button className="w-full" onClick={addExpense} disabled={!expenseNameValid || !expenseAmountValid}>
                     Add New Expense
                 </Button>
             </CardFooter>
