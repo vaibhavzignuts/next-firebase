@@ -40,10 +40,10 @@ const budgetDataSlice = createSlice({
         addBudget: (state, action: PayloadAction<Budget>) => {
             state.budgets.push(action.payload);
         },
-        settotalAmount: (state, action) => {
+        // settotalAmount: (state, action) => {
 
-            state.budgets = action.payload;
-        },
+        //     state.budgets = action.payload;
+        // },
         setExpenses: (state, action) => {
             state.expenses = action.payload;
         },
@@ -51,6 +51,6 @@ const budgetDataSlice = createSlice({
     },
 });
 
-export const { setBudgets, updateBudget, addBudget, settotalAmount, setExpenses } = budgetDataSlice.actions;
+export const { setBudgets, updateBudget, addBudget, setExpenses } = budgetDataSlice.actions;
 
 export default budgetDataSlice.reducer;

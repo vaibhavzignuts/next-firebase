@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { MdDeleteOutline } from "react-icons/md";
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { addDoc, collection, getDocs } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { addBudget, setBudgets, settotalAmount } from '@/redux/budgetdata/budgetdataSlice';
 import { Button } from '@/components/ui/button';
@@ -64,6 +64,7 @@ const Page = () => {
             [name]: value,
         }));
     };
+
 
     const validateForm = () => {
         let valid = true;
@@ -190,8 +191,7 @@ const Page = () => {
                                     <h1 className='text-center'>{budget?.budgetAmount}$</h1>
                                 </div>
                             </div>
-                            <div className='flex float-start pt-10'> <MdDeleteOutline className="text-red-500 text-3xl" />
-                            </div>
+
                             <div className='flex float-end pt-10'><AiOutlineRight className=" text-3xl" /></div>
                         </div>
                     ))
