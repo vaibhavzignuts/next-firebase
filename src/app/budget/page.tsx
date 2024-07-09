@@ -5,7 +5,7 @@ import { MdDeleteOutline } from "react-icons/md";
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { addDoc, collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { addBudget, setBudgets, settotalAmount } from '@/redux/budgetdata/budgetdataSlice';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { AiOutlineRight } from 'react-icons/ai';
 import { BsEmojiLaughing } from 'react-icons/bs';
 import Loader from '@/components/Loader';
+import { toast } from "react-toastify";
 
 const Page = () => {
     const router = useRouter();
@@ -22,40 +23,59 @@ const Page = () => {
     const [formErrors, setFormErrors] = useState({ budgetName: '', budgetAmount: '' });
     const [isLoading, setIsLoading] = useState(false);
     const { budgets } = useSelector((state: any) => state.budgetData);
-
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [showEmptyCard, setShowEmptyCard] = useState(true);
+    const user = auth.currentUser;
+
+
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             setShowEmptyCard(false);
-        }, 2000);
+        }, 1000);
 
         return () => clearTimeout(timeoutId);
     }, []);
 
     useEffect(() => {
+        if (!user) {
+            router.replace('/login')
+            return;
+        }
 
         const fetchBudgets = async () => {
-
             try {
-                const collectionRef = collection(db, 'budget');
+                setIsLoading(true)
+
+                console.log('api');
+                console.log(user);
+                const collectionRef = collection(db, 'users', user.uid, 'budgets');
                 const querySnapshot = await getDocs(collectionRef);
                 const budgetsData = querySnapshot.docs.map(doc => ({
                     id: doc.id,
-                    budgetAmount: doc.data().budgetAmount,
-                    currentBudgetAmount: doc.data().budgetAmount,
                     ...doc.data()
                 }));
 
                 dispatch(setBudgets(budgetsData));
+
+                setIsLoading(false)
+
             } catch (error) {
-                console.error('Error fetching budgets:', error);
+                console.log(error.message);
+            } finally {
+                setIsLoading(false)
             }
-        };
 
 
-        fetchBudgets();
-    }, []);
+        }
+
+        auth.currentUser && fetchBudgets();
+
+
+
+
+
+    }, [auth.currentUser]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -85,6 +105,31 @@ const Page = () => {
     };
 
 
+    // const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    //     e.preventDefault();
+
+    //     if (!validateForm()) {
+    //         return;
+    //     }
+
+    //     const newBudget = {
+    //         budgetName: formData.budgetName,
+    //         totalAmount: parseFloat(formData.budgetAmount),
+    //         budgetAmount: parseFloat(formData.budgetAmount),
+    //     };
+
+    //     try {
+    //         const collectionRef = collection(db, 'budget');
+    //         const docRef = await addDoc(collectionRef, newBudget);
+    //         // dispatch(settotalAmount(newBudget))
+    //         dispatch(addBudget({ id: docRef.id, ...newBudget }));
+    //         setFormData({ budgetName: '', budgetAmount: '' });
+    //     } catch (error) {
+    //         console.error('Error adding budget:', error.message);
+    //     }
+    // };
+
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
@@ -99,13 +144,20 @@ const Page = () => {
         };
 
         try {
-            const collectionRef = collection(db, 'budget');
-            const docRef = await addDoc(collectionRef, newBudget);
-            // dispatch(settotalAmount(newBudget))
+
+            if (!user) {
+                throw new Error('User not authenticated');
+            }
+
+            const userBudgetsRef = collection(db, 'users', user.uid, 'budgets');
+            const docRef = await addDoc(userBudgetsRef, newBudget);
+
             dispatch(addBudget({ id: docRef.id, ...newBudget }));
             setFormData({ budgetName: '', budgetAmount: '' });
+            setIsDialogOpen(false);
+            toast.success('Budgets added successfully')
         } catch (error) {
-            console.error('Error adding budget:', error.message);
+            toast.error('Error fetching budgets:', error);
         }
     };
 
@@ -116,7 +168,7 @@ const Page = () => {
     return (
         <div>
             <h1 className='font-bold pb-5 text-xl'>My Budget</h1>
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger className='w-full h-36 ' asChild>
                     <Button variant="outline">+ Create New Budget</Button>
                 </DialogTrigger>
@@ -170,7 +222,7 @@ const Page = () => {
             <div className='pt-16 flex flex-wrap gap-10'>
                 {isLoading ? (
                     <div className="flex items-center justify-center mx-auto"><Loader /></div>
-                ) : budgets.length === 0 ? (
+                ) : budgets?.length === 0 ? (
                     <div className="w-96 h-36 max-w-sm mx-auto bg-white border border-gray-200 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700 mb-6 cursor-pointer transform transition duration-300 hover:scale-105 hover:shadow-lg hover:bg-gray-50">
                         <div className='flex justify-center items-center h-full'>
                             <p className='text-gray-500'>You haven't created any budgets yet.</p>

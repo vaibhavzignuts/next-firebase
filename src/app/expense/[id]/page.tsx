@@ -9,8 +9,9 @@ import { BsEmojiLaughing } from 'react-icons/bs';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { setBudgets } from '@/redux/budgetdata/budgetdataSlice';
+import { toast } from "react-toastify";
 
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { MdDeleteOutline } from 'react-icons/md';
 
 type collection = {
@@ -32,28 +33,39 @@ const Page = () => {
 
     const percentage = (remainingAmount / totalAmount) * 100
 
+    // useEffect(() => {
+    //     toast.success('hello')
+    // }, [])
+
 
     const handleDelete = async (budget: any) => {
+        const user = auth.currentUser;
 
         try {
             console.log('hi');
-            const budgetRef = doc(db, 'budget', id);
+            const budgetRef = doc(db, 'users', user.uid, 'budgets', id);
+
             await deleteDoc(budgetRef);
             dispatch(setBudgets(budgets.filter(b => b.id !== id)));
+            toast.success("Budget deleted Successfully");
             router.push('/budget')
 
         } catch (error) {
-            console.error('Error deleting budget:', error);
+
+            toast.error('Error deleting budget:', error);
         }
     };
 
 
 
     useEffect(() => {
+        console.log('hi');
         const getSpecificBudgetData = async () => {
 
+            const user = auth.currentUser;
+
             try {
-                const docRef = doc(db, 'budget', id);
+                const docRef = doc(db, 'users', user.uid, 'budgets', id);
                 const docSnap = await getDoc(docRef);
 
                 const budget = {

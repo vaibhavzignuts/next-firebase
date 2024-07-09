@@ -12,6 +12,7 @@ import {
 import { Button } from "./ui/button";
 
 import { useWindowWidth } from "@react-hook/window-size";
+import { auth } from "@/lib/firebase";
 
 type NavItem = {
     title: string;
@@ -30,6 +31,9 @@ export default function SideNavbar({ }: Props) {
     function toggleSidebar() {
         setIsCollapsed(!isCollapsed);
     }
+
+    const user = auth.currentUser
+    console.log(user);
 
     return (
         <div className="relative max-w-[140px] border-r px-3 pb-10 pt-24 ">

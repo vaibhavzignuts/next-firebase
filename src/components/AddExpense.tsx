@@ -7,10 +7,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useParams } from "next/navigation";
-import { updateBudget, settotalAmount, setExpenses } from '@/redux/budgetdata/budgetdataSlice';
-
+import { updateBudget, setExpenses } from '@/redux/budgetdata/budgetdataSlice';
+import { toast } from "react-toastify";
 import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 
 export function AddExpense() {
     const dispatch = useDispatch();
@@ -37,8 +37,8 @@ export function AddExpense() {
     useEffect(() => {
         const getExpenses = async () => {
             try {
-
-                const expensesSnapshot = await getDocs(collection(db, 'budget', id, 'expense'));
+                const user = auth.currentUser;
+                const expensesSnapshot = await getDocs(collection(db, 'users', user.uid, 'budgets', id, 'expense'));
                 const updatedExpenses = expensesSnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
@@ -63,19 +63,26 @@ export function AddExpense() {
     const addExpense = async () => {
         const amount = parseFloat(expenseAmount);
 
-        const expenseData = {
-            expenseName,
-            expenseAmount: amount
-        };
-
         try {
-            // Add the expense to the budget
-            const expensesRef = collection(db, 'budget', id, 'expense');
-            const expenseDocRef = await addDoc(expensesRef, expenseData);
+            const user = auth.currentUser;
+            if (!user) {
+                console.error('User not authenticated');
+                return;
+            }
 
+            const expenseData = {
+                expenseName,
+                expenseAmount: amount
+            };
+
+            // Add the expense to the budget
+            const expensesRef = collection(db, 'users', user.uid, 'budgets', id, 'expense');
+            const expenseDocRef = await addDoc(expensesRef, expenseData);
+            toast.success('Expenses added successfully')
             // Update the budget after adding the new expense document
-            const budgetRef = doc(db, 'budget', id);
+            const budgetRef = doc(db, 'users', user.uid, 'budgets', id);
             const budgetDoc = await getDoc(budgetRef);
+
             if (budgetDoc.exists()) {
                 const currentTotalAmount = budgetDoc.data().budgetAmount;
                 const newTotalAmount = currentTotalAmount - amount;
@@ -85,19 +92,16 @@ export function AddExpense() {
 
                 await updateDoc(budgetRef, {
                     budgetAmount: newTotalAmount,
-
                 });
 
-
-
-                const expensesSnapshot = await getDocs(collection(db, 'budget', id, 'expense'));
+                // Fetch updated expenses
+                const expensesSnapshot = await getDocs(collection(db, 'users', user.uid, 'budgets', id, 'expense'));
                 const updatedExpenses = expensesSnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
 
                 dispatch(setExpenses(updatedExpenses));
-
             } else {
                 console.error("Budget document not found");
             }
@@ -108,9 +112,10 @@ export function AddExpense() {
             setExpenseAmountValid(false);
 
         } catch (error) {
-            console.error("Error adding expense:", error.message);
+            toast.error("Error adding expense:", error.message);
         }
     };
+
 
 
     return (

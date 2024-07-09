@@ -13,9 +13,10 @@ import {
 } from 'chart.js';
 import TopCards from '@/components/TopCards';
 import { useDispatch, useSelector } from 'react-redux';
-import { setBudgets, settotalAmount } from '@/redux/budgetdata/budgetdataSlice';
-import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { setBudgets, } from '@/redux/budgetdata/budgetdataSlice';
+import { collection, getDocs } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 ChartJS.register(
     CategoryScale,
@@ -29,16 +30,24 @@ ChartJS.register(
 const BarChart = () => {
 
     const dispatch = useDispatch();
-    const { budgets, } = useSelector((state: any) => state.budgetData);
+    const { budgets } = useSelector((state: any) => state.budgetData);
+    const router = useRouter();
+    const user = auth.currentUser;
+    console.log(user);
 
 
 
 
 
     useEffect(() => {
+        if (!user) {
+            router.replace('/login')
+        }
+
+
         const fetchBudgets = async () => {
             try {
-                const collectionRef = collection(db, 'budget');
+                const collectionRef = collection(db, 'users', user?.uid, 'budgets');
                 const querySnapshot = await getDocs(collectionRef);
                 const budgetsData = querySnapshot.docs.map(doc => ({
                     id: doc.id,

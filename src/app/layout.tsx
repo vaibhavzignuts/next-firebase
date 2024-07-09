@@ -7,7 +7,8 @@ import { cn } from "../lib/utils";
 import { Provider } from "react-redux";
 import { persistor, store } from "@/redux/store";
 import { PersistGate } from 'redux-persist/integration/react';
-
+import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,6 +36,7 @@ export default function RootLayout({
         <>
           <Provider store={store}>
             <PersistGate loading={null} persistor={persistor}>
+              <ToastContainer />
               <SideNavbar />
               <div className="p-8 w-full">{children}</div>
             </PersistGate>
