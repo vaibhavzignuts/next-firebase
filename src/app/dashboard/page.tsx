@@ -83,7 +83,7 @@ const BarChart = () => {
     const chartOptions = {
         plugins: {
             legend: {
-                position: 'top',
+                position: 'top' as const,
             },
             title: {
                 display: true,
