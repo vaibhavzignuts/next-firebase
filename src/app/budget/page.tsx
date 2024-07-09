@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { addDoc, collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { addBudget, setBudgets, settotalAmount } from '@/redux/budgetdata/budgetdataSlice';
+import { addBudget, setBudgets, } from '@/redux/budgetdata/budgetdataSlice';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -60,7 +60,7 @@ const Page = () => {
 
                 setIsLoading(false)
 
-            } catch (error) {
+            } catch (error: any) {
                 console.log(error.message);
             } finally {
                 setIsLoading(false)
@@ -156,7 +156,7 @@ const Page = () => {
             setFormData({ budgetName: '', budgetAmount: '' });
             setIsDialogOpen(false);
             toast.success('Budgets added successfully')
-        } catch (error) {
+        } catch (error: any) {
             toast.error('Error fetching budgets:', error);
         }
     };
@@ -225,7 +225,7 @@ const Page = () => {
                 ) : budgets?.length === 0 ? (
                     <div className="w-96 h-36 max-w-sm mx-auto bg-white border border-gray-200 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700 mb-6 cursor-pointer transform transition duration-300 hover:scale-105 hover:shadow-lg hover:bg-gray-50">
                         <div className='flex justify-center items-center h-full'>
-                            <p className='text-gray-500'>You haven't created any budgets yet.</p>
+                            <p className='text-gray-500'>You have not created any budgets yet.</p>
                         </div>
                     </div>
                 ) : (

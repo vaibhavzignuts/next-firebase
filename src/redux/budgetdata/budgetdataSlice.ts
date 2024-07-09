@@ -27,7 +27,7 @@ const budgetDataSlice = createSlice({
     name: 'budgetData',
     initialState,
     reducers: {
-        setBudgets: (state, action: PayloadAction<Budget[]>) => {
+        setBudgets: (state, action: PayloadAction<any>) => {
             state.budgets = action.payload;
         },
 
