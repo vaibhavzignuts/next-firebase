@@ -16,7 +16,7 @@ const Page = () => {
     const [username, setUsername] = useState('');
     const router = useRouter()
 
-
+    const user = auth?.currentUser;
     useEffect(() => {
         console.log('hi');
         const user = auth?.currentUser;
@@ -25,7 +25,7 @@ const Page = () => {
             router.replace('/')
             return;
         }
-    }, [])
+    }, [user])
 
     const handleRegister = async (e) => {
         e.preventDefault();

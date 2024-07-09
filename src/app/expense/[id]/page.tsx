@@ -29,6 +29,7 @@ const Page = () => {
 
     const totalAmount = budgets.map((item) => item.totalAmount)
     const remainingAmount = budgets.map((item) => item.budgetAmount)
+    const user = auth.currentUser;
 
 
     const percentage = (remainingAmount / totalAmount) * 100
@@ -80,7 +81,7 @@ const Page = () => {
             }
         };
         getSpecificBudgetData();
-    }, []);
+    }, [user]);
 
     return (
         <>

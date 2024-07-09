@@ -35,6 +35,7 @@ export function AddExpense() {
 
 
     useEffect(() => {
+
         const getExpenses = async () => {
             try {
                 const user = auth.currentUser;
@@ -56,7 +57,7 @@ export function AddExpense() {
             getExpenses();
         }
 
-    }, []);
+    }, [id]);
 
 
 

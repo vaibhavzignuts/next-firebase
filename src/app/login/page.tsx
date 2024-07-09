@@ -25,17 +25,18 @@ const Page = () => {
     const [password, setPassword] = useState('');
 
     const router = useRouter();
+    const user = auth?.currentUser;
 
 
     useEffect(() => {
-        console.log('hi');
+
         const user = auth?.currentUser;
 
         if (user) {
             router.replace('/')
             return;
         }
-    }, [])
+    }, [user])
 
 
 
