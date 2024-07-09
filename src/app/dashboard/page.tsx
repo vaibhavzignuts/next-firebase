@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
@@ -13,8 +12,8 @@ import {
 } from 'chart.js';
 import TopCards from '@/components/TopCards';
 import { useDispatch, useSelector } from 'react-redux';
-import { setBudgets, } from '@/redux/budgetdata/budgetdataSlice';
-import { collection, getDocs } from 'firebase/firestore';
+import { setBudgets } from '@/redux/budgetdata/budgetdataSlice';
+import { collection, getDocs, Firestore } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
@@ -28,26 +27,20 @@ ChartJS.register(
 );
 
 const BarChart = () => {
-
     const dispatch = useDispatch();
     const { budgets } = useSelector((state: any) => state.budgetData);
     const router = useRouter();
     const user = auth.currentUser;
-    console.log(user);
-
-
-
-
 
     useEffect(() => {
-        if (!user) {
-            router.replace('/login')
-        }
-
-
         const fetchBudgets = async () => {
             try {
-                const collectionRef = collection(db, 'users', user?.uid, 'budgets');
+                if (!user) {
+                    router.replace('/login');
+                    return;
+                }
+
+                const collectionRef = collection(db as Firestore, 'users', user.uid, 'budgets'); // Assert db as Firestore
                 const querySnapshot = await getDocs(collectionRef);
                 const budgetsData = querySnapshot.docs.map(doc => ({
                     id: doc.id,
@@ -62,17 +55,12 @@ const BarChart = () => {
             }
         };
 
-
         fetchBudgets();
-    }, []);
+    }, [user, router, dispatch]);
 
-
-
-    const budgetsName = budgets.map((item) => item.budgetName);
-    const budgetAmount = budgets.map((item) => item.budgetAmount);
-    const totalAmount = budgets.map((item) => item.totalAmount);
-
-
+    const budgetsName = budgets.map((item: any) => item.budgetName);
+    const budgetAmount = budgets.map((item: any) => item.budgetAmount);
+    const totalAmount = budgets.map((item: any) => item.totalAmount);
 
     const chartData = {
         labels: budgetsName,
@@ -81,17 +69,16 @@ const BarChart = () => {
                 label: 'totalBudget $',
                 data: totalAmount,
                 borderColor: 'rgb(53, 162, 235)',
-                backgroundColor: 'rgb(53, 162, 235, 0.4',
+                backgroundColor: 'rgba(53, 162, 235, 0.4)',
             },
             {
                 label: 'remainingBudget $',
                 data: budgetAmount,
                 borderColor: 'rgb(227, 39, 80)',
-                backgroundColor: 'rgb(227, 39, 80, 0.4',
+                backgroundColor: 'rgba(227, 39, 80, 0.4)',
             },
         ]
-    }
-
+    };
 
     const chartOptions = {
         plugins: {
@@ -105,12 +92,11 @@ const BarChart = () => {
         },
         maintainAspectRatio: false,
         responsive: true
-    }
-
+    };
 
     return (
         <>
-            <div className=' w-full md:col-span-2 relative lg:h-[70vh] h-[50vh] m-auto p-4 border rounded-lg bg-white'>
+            <div className='w-full md:col-span-2 relative lg:h-[70vh] h-[50vh] m-auto p-4 border rounded-lg bg-white'>
                 <TopCards />
                 <Bar data={chartData} options={chartOptions} />
             </div>
