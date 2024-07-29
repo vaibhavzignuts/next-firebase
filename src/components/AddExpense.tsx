@@ -101,6 +101,7 @@ export function AddExpense() {
                     id: doc.id,
                     ...doc.data()
                 }));
+                console.log(updatedExpenses);
 
                 dispatch(setExpenses(updatedExpenses));
             } else {
